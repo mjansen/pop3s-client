@@ -19,7 +19,7 @@ executable hpops
   main-is:             hpops.hs
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       base, bytestring, filepath, transformers, directory, tls
+  build-depends:       base, bytestring, filepath, transformers, directory, tls, data-default, time,
+                       crypto-random, containers, x509, x509-store, network, old-locale
   hs-source-dirs:      .
   default-language:    Haskell2010
-  

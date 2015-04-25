@@ -2,6 +2,7 @@
 
 module Network.POP3.SSLClient where
 
+import Control.Applicative
 import Control.Monad
 
 import Crypto.Random -- (SystemRNG(..), createEntropyPool)
@@ -17,6 +18,8 @@ import Data.X509
 import Data.X509.File
 import Data.X509.CertificateStore
 import Data.Time
+-- import Data.Time.Format (defaultTimeLocale)
+import System.Locale
 
 import GHC.Exts
 
