@@ -18,28 +18,33 @@ import System.Directory
 import Network.POP3.SSLClient
 
 main :: IO ()
-main = withPOP3Connection retrieveAllUsingUIDWithoutDeletion
+main = withPOP3Connection retrieveAllUsingUID
 
-withPOP3Connection :: (Context -> IO ()) -> IO ()
+data Config = Config
+  { deleteMessages :: Bool
+  } deriving Show;
+
+withPOP3Connection :: (Config -> Context -> IO ()) -> IO ()
 withPOP3Connection action = do
-  [ host, user, password ] <- lines <$> readFile "config"
+  [ host, user, password, deleteQ ] <- lines <$> readFile "config"
+  let cfg = Config (deleteQ == "delete")
   ctx <- connectSSL host user password
-  action ctx
+  action cfg ctx
   closeConnection ctx
 
-retrieveAllWithoutDeletion :: Context -> IO ()
-retrieveAllWithoutDeletion ctx = do
+retrieveAll :: Config -> Context -> IO ()
+retrieveAll cfg ctx = do
   messageList <- parseMessageList <$> rpcT ctx LALL
   when debug $ mapM_ print messageList
-  mapM_ (uncurry $ retrieveMessage ctx) messageList
+  mapM_ (uncurry $ retrieveMessage (deleteMessages cfg) ctx) messageList
   
-retrieveAllUsingUIDWithoutDeletion :: Context -> IO ()
-retrieveAllUsingUIDWithoutDeletion ctx = do
+retrieveAllUsingUID :: Config -> Context -> IO ()
+retrieveAllUsingUID cfg ctx = do
   haves <- getAlreadyDownloadedMessages
   messageList <- parseUIDList <$> rpcT ctx UALL
   let messageListNew = filter ((`Set.notMember` haves) . snd) messageList
   when debug $ mapM_ print messageList
-  mapM_ (uncurry $ retrieveMessageUID ctx) messageListNew
+  mapM_ (uncurry $ retrieveMessageUID (deleteMessages cfg) ctx) messageListNew
 
 -- assume a simple data base of already downloaded messages.  it is
 -- implemented by a directory, with each message in a separate file.

@@ -157,8 +157,8 @@ parseUIDList (OK str) = map (\ [msgIdStr, msgUID] -> (read' msgIdStr, msgUID))
   where read' = read . BC.unpack
 parseUIDList _ = error "expected a simple string"
 
-retrieveMessage :: Context -> Int -> Int -> IO ()
-retrieveMessage ctx msgId sz = do
+retrieveMessage :: Bool -> Context -> Int -> Int -> IO ()
+retrieveMessage deleteQ ctx msgId sz = do
   OK msg' <- rpcT ctx (RETR msgId)
   let (header, msg) = decodeMultiLine msg'
   let fName = "msg." ++ show msgId
@@ -168,9 +168,10 @@ retrieveMessage ctx msgId sz = do
     ++ " (lines: " ++ (show . length . BC.lines $ msg)
     ++ ")"
   writeToMBOX "new" msg
+  when deleteQ $ (rpcT ctx (DELE msgId) >> return ())
 
-retrieveMessageUID :: Context -> Int -> ByteString -> IO ()
-retrieveMessageUID ctx msgId muid = do
+retrieveMessageUID :: Bool -> Context -> Int -> ByteString -> IO ()
+retrieveMessageUID deleteQ ctx msgId muid = do
   OK msg' <- rpcT ctx (RETR msgId)
   let (header, msg) = decodeMultiLine msg'
   let fName = "msg" </> BC.unpack muid
@@ -178,6 +179,7 @@ retrieveMessageUID ctx msgId muid = do
   putStrLn $ "wrote " ++ show (BC.length msg) ++ " bytes to " ++ fName
     ++ " (" ++ (show . length . BC.lines $ msg) ++ " lines)"
   writeToMBOX "new" msg
+  when deleteQ $ (rpcT ctx (DELE msgId) >> return ())
 
 encodeSingleLine :: ByteString -> ByteString
 encodeSingleLine = (`BC.append` "\r\n")
