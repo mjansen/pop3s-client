@@ -1,11 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports    #-}
 
 module Network.POP3.SSLClient where
 
 import Control.Applicative
 import Control.Monad
 
-import Crypto.Random -- (SystemRNG(..), createEntropyPool)
+import "crytpo-random" Crypto.Random
 import Network.Socket hiding (HostName)
 import Network.TLS
 import Network.TLS.Extra.Cipher
@@ -18,8 +19,6 @@ import Data.X509
 import Data.X509.File
 import Data.X509.CertificateStore
 import Data.Time
--- import Data.Time.Format (defaultTimeLocale)
-import System.Locale
 
 import GHC.Exts
 
@@ -33,7 +32,7 @@ type Port      = Int
 type ByteString = BC.ByteString
 
 debug :: Bool
-debug = True
+debug = False
 
 connectSSL :: HostName -> UserName -> Password -> IO Context
 connectSSL mailHost user password = do
@@ -50,7 +49,7 @@ connectSSL mailHost user password = do
   let params = ClientParams Nothing (mailHost, BC.empty) True Nothing
                (def { sharedCAStore = caStore }) def (def { supportedCiphers = ciphersuite_all })
       rng = cprgCreate epool :: SystemRNG
-  ctx <- contextNew s params rng
+  ctx <- contextNew s params
   handshake ctx
   _ <- recvDataD ctx  -- greeting
   _ <- rpcT ctx (USER user)
@@ -123,7 +122,7 @@ recvDataUntil :: BC.ByteString -> BC.ByteString -> Context -> IO ByteString
 recvDataUntil sentinel sofar ctx = do
   str <- BC.append sofar <$> recvDataD ctx
   if sentinel `BC.isSuffixOf` str
-    then return str
+    then when debug (print sentinel >> print str) >> return str
     else recvDataUntil sentinel str ctx
 
 recvDataSingleLine :: Context -> IO ByteString
@@ -141,6 +140,7 @@ rpcT ctx cmd = do
   sendDataD ctx (L.fromStrict . (`BC.append` BC.pack "\r\n") . BC.pack . show $ cmd)
   case cmd of
    LALL        -> parseReply <$> recvDataMultiLine  ctx
+   UALL        -> parseReply <$> recvDataMultiLine  ctx
    (RETR _)    -> parseReply <$> recvDataMultiLine  ctx
    (TOP msg n) -> parseReply <$> recvDataMultiLine  ctx
    _           -> parseReply <$> recvDataSingleLine ctx

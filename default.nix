@@ -3,7 +3,7 @@
 { mkDerivation, network, tls, crypto-random, data-default, base, pop3-client, stdenv }:
 
 mkDerivation {
-  pname = "hpop";
+  pname = "pop3s-client";
   version = "0.1.0.0";
   src = ./.;
   isLibrary = false;
