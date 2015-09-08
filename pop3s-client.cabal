@@ -23,3 +23,4 @@ executable hpops
                        crypto-random, containers, x509, x509-store, network, old-locale
   hs-source-dirs:      .
   default-language:    Haskell2010
+  ghc-options:         -package "crypto-random (Crypto.Random as CryptoRandom)"

@@ -1,12 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports    #-}
 
 module Network.POP3.SSLClient where
 
 import Control.Applicative
 import Control.Monad
 
-import "crytpo-random" Crypto.Random
+import CryptoRandom
 import Network.Socket hiding (HostName)
 import Network.TLS
 import Network.TLS.Extra.Cipher
